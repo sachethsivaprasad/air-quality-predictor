@@ -25,39 +25,15 @@ FEATURE_NAMES = [
 ]
 app = Flask(__name__)
 
-
-# def read_serial_data():
-#     """Reads data from the serial port."""
-#     try:
-#         with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as ser:
-#             time.sleep(2)  # Allow Arduino to send data
-#             ser.flush()  # Clear buffer
-#             raw_data = ser.readline().decode('utf-8').strip()  # Read a line
-#
-#             if raw_data:
-#                 print("Raw Serial Data:", raw_data)
-#                 # Parsing the sensor values
-#                 parts = raw_data.split("|")
-#                 parsed_data = {}
-#                 for part in parts:
-#                     key, value = part.split(":")
-#                     parsed_data[key.strip()] = float(value.strip())
-#                 return parsed_data
-#             else:
-#                 return None
-#     except Exception as e:
-#         print(f"Error Reading Serial Data: {e}")
-#         return None
+@app.route('/')
+def home():
+    return render_template('location_select.html')
 
 @app.route('/index')
 def index():
     envData = serial_data_connnector.read_serial_data()
     print(envData)
     return render_template('index.html', data=envData)
-
-@app.route('/')
-def home():
-    return render_template('location_select.html')
 
 @app.route('/predict', methods=['POST'])
 def predict():
