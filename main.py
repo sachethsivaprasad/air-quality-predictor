@@ -1,12 +1,9 @@
 from flask import Flask, render_template, request
-import serial
-import time
 import pandas as pd
 import joblib
 import os
 
-SERIAL_PORT = 'COM3'  # Change as needed (Linux: "/dev/ttyUSB0")
-BAUD_RATE = 9600
+import serial_data_connnector
 
 # Load the pre-trained model
 MODEL_PATH = "random_forest_model.joblib"
@@ -26,39 +23,41 @@ FEATURE_NAMES = [
     'Proximity_to_Industrial_Areas',
     'Population_Density'
 ]
-
-
 app = Flask(__name__)
 
-def read_serial_data():
-    """Reads data from the serial port."""
-    try:
-        with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as ser:
-            time.sleep(2)  # Allow Arduino to send data
-            ser.flush()  # Clear buffer
-            raw_data = ser.readline().decode('utf-8').strip()  # Read a line
 
-            if raw_data:
-                print("Raw Serial Data:", raw_data)
-                # Parsing the sensor values
-                parts = raw_data.split("|")
-                parsed_data = {}
-                for part in parts:
-                    key, value = part.split(":")
-                    parsed_data[key.strip()] = float(value.strip())
-                return parsed_data
-            else:
-                return None
-    except Exception as e:
-        print(f"Error Reading Serial Data: {e}")
-        return None
+# def read_serial_data():
+#     """Reads data from the serial port."""
+#     try:
+#         with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as ser:
+#             time.sleep(2)  # Allow Arduino to send data
+#             ser.flush()  # Clear buffer
+#             raw_data = ser.readline().decode('utf-8').strip()  # Read a line
+#
+#             if raw_data:
+#                 print("Raw Serial Data:", raw_data)
+#                 # Parsing the sensor values
+#                 parts = raw_data.split("|")
+#                 parsed_data = {}
+#                 for part in parts:
+#                     key, value = part.split(":")
+#                     parsed_data[key.strip()] = float(value.strip())
+#                 return parsed_data
+#             else:
+#                 return None
+#     except Exception as e:
+#         print(f"Error Reading Serial Data: {e}")
+#         return None
+
+@app.route('/index')
+def index():
+    envData = serial_data_connnector.read_serial_data()
+    print(envData)
+    return render_template('index.html', data=envData)
 
 @app.route('/')
-def index():
-    envData = read_serial_data()
-    print(envData)
-
-    return render_template('index.html', data=envData)
+def home():
+    return render_template('location_select.html')
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -82,6 +81,7 @@ def predict():
         values = {}
         for field in fields:
             value = request.form.get(field)
+            print(value)
             if value is None or value.strip() == "":
                 raise ValueError(f"{field.replace('_', ' ').capitalize()} is required.")
             try:
