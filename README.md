@@ -1,66 +1,85 @@
-#include <DHT.h>
+﻿# Air Quality Prediction System
 
-// Sensor Pin Definitions
-#define MQ7_PIN A0        // Analog pin for MQ-7 (CO)
-#define MQ135_PIN A1      // Analog pin for MQ-135 (Air Quality)
-#define DHTPIN 4         // Digital pin for DHT11
-#define DHTTYPE DHT11     // Type of DHT sensor
+## Overview
+This project is a web-based air quality prediction system that uses machine learning to classify air quality based on various environmental parameters. The system can collect real-time sensor data and provide predictions about air quality levels.
 
-// DHT11 Sensor Initialization
-DHT dht(DHTPIN, DHTTYPE);
+## Features
+- Real-time environmental data collection through serial connection
+- Multiple room monitoring capability
+- Air quality prediction using Random Forest model
+- Interactive web interface for data input and visualization
+- Support for various air quality parameters:
+  - Temperature
+  - Humidity
+  - PM2.5 and PM10
+  - NO2, SO2, and CO levels
+  - Proximity to industrial areas
+  - Population density
 
-// Calibration Constants (Update after calibration)
-float R0_MQ7 = 13.53;     // Must be calibrated for MQ-7
-float R0_MQ135 = 9.69;   // Must be calibrated for MQ-135
+## Technical Stack
+- **Backend**: Python Flask
+- **Frontend**: HTML, CSS, Bootstrap 5
+- **Machine Learning**: Scikit-learn (Random Forest model)
+- **Data Processing**: Pandas
+- **Model Storage**: joblib
 
-// Constants for Gas Curve (Datasheet)
-float A_MQ7 = 99.042;    // A constant for MQ-7 CO
-float B_MQ7 = -1.518;    // B constant for MQ-7 CO
+## Project Structure
+air-quality-predictor/
 
-float A_MQ135 = 116.602; // A constant for MQ-135
-float B_MQ135 = -2.769;  // B constant for MQ-135
+├── `main.py` *# Main Flask application*  
+├── `random_forest_model.joblib` *# Pre-trained ML model*  
+├── `serial_data_connector.py` *# Serial data interface*  
+├── static/  
+│   ├── css/  
+│   │   ├── `style.css`  
+│   │   └── `location_select.css`  
+│   └── js/  
+│       └── `location_select.js`  
+└── templates/  
+    ├── `location_select.html` *# Location selection page*  
+    ├── `index.html` *# Main input form*  
+    └── `result.html` *# Prediction results page*  
 
-// Function to calculate resistance Rs from analog value
-float getSensorResistance(int sensorPin) {
-  int sensorValue = analogRead(sensorPin);
-  float sensorVoltage = (sensorValue / 1023.0) * 5.0; // Convert to voltage
-  float sensorResistance = ((5.0 * 10.0) / sensorVoltage) - 10.0; // Rs calculation with RL = 10K
-  return sensorResistance;
-}
+## Installation
 
-// Function to calculate PPM using Rs/R0 ratio
-float getPPM(float Rs, float R0, float A, float B) {
-  float ratio = Rs / R0; // Rs/R0 ratio
-  return A * pow(ratio, B); // Apply equation from datasheet
-}
+1. Clone the repository:
+```bash
+git clone [repository-url]
+```
 
-void setup() {
-  Serial.begin(9600);
-  dht.begin();
-}
+2. Create and activate a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
-void loop() {
-  // Read resistance values
-  float Rs_MQ7 = getSensorResistance(MQ7_PIN);
-  float Rs_MQ135 = getSensorResistance(MQ135_PIN);
+3. Install required dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-  // Convert to PPM
-  float ppm_CO = getPPM(Rs_MQ7, R0_MQ7, A_MQ7, B_MQ7);
-  float ppm_AirQuality = getPPM(Rs_MQ135, R0_MQ135, A_MQ135, B_MQ135);
+## Configuration
 
-  // Read Temperature & Humidity
-  float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();
+1. Ensure the `random_forest_model.joblib` file is present in the root directory
+2. Configure serial port settings in `serial_data_connector.py` for using hardware sensors
 
-  // Print Data
-  Serial.print("CO: ");
-  Serial.print(ppm_CO);
-  Serial.print(" | AirQualityPPM: ");
-  Serial.print(ppm_AirQuality);
-  Serial.print(" | Temperature: ");
-  Serial.print(temperature);
-  Serial.print("| Humidity: ");
-  Serial.print(humidity);
-  Serial.print("\n");
-  delay(1000);
-}
+## Usage
+
+1. Start the Flask application:
+```bash
+python main.py
+```
+
+2. Access the web interface at `http://localhost:5000`
+3. Select a room location
+4. Input or view sensor data
+5. Get air quality predictions
+
+## Air Quality Classifications
+
+The system classifies air quality into four categories:
+- **Good**: Clean air with low pollution levels
+- **Moderate**: Acceptable air quality with some pollutants present
+- **Poor**: Noticeable pollution that may affect sensitive groups
+- **Hazardous**: Highly polluted air posing serious health risks
+
